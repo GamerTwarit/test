@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatbot</title>
+    <style>
+          body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #chat-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .message {
+            padding: 10px;
+            margin: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+
+        .user-message {
+            background-color: #007bff;
+            color: #fff;
+            align-self: flex-end;
+        }
+
+        .chatbot-message {
+            background-color: #e0e0e0;
+            color: #333;
+            align-self: flex-start;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-top: 1px solid #ccc;
+            font-size: 16px;
+            margin-top: 20px;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input[type="text"]::placeholder {
+            color: #777;
+        }
+
+        input[type="text"]:focus {
+            border-color: #007bff;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <!-- Chat history will be displayed here -->
+    </div>
+    <input type="text" id="user-input" placeholder="Type a message..." />
+
+    <script>
+        const witApiToken = 'BFMZOIXERYR7IERA4OL7POEY6PKBKBAE';
+
+        const responses = {
+            happy: "I'm glad to hear that you're happy!",
+            sad: "I'm sorry to hear that you're sad. How can I help?",
+            angry: "I understand you're angry. Let's talk it out.",
+            greeting: "I feel great when I talk to you, thanks for asking!",
+            insult: "I'm sorry, I didn't want to hurt you.",
+            hello_hi: "Hello, how is your day going?",
+            sfwcompliment: "Wha? *blushes deeply* I- I love you too.",
+            thigh_gesture: "*blushes deeply* Um... *takes your hand and takes it near the...*",
+            shoulder_gesture: "*blushes* Um, holds your hand.",
+            photos: "You want my photos? Sorry, this is not supported.",
+            nsfw: "What? I'm not ready yet.",
+            default: "I'm sorry, I didn't understand. Can you please rephrase your question?"
+        };
+
+        function sendMessageToWit(message) {
+            fetch(`https://api.wit.ai/message?v=20210914&q=${encodeURIComponent(message)}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${witApiToken}`,
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                handleWitResponse(data);
+            })
+            .catch(error => {
+                console.error('Error sending message to Wit.ai:', error);
+            });
+        }
+
+        function handleWitResponse(response) {
+            if (response && response.intents.length > 0) {
+                const intent = response.intents[0].name;
+                const chatbotResponse = responses[intent] || responses.default;
+                displayMessage(chatbotResponse, false);
+            } else {
+                displayMessage(responses.default, false);
+            }
+        }
+
+        function displayMessage(text, isUser) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isUser ? 'user-message' : 'chatbot-message';
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+        }
+
+        document.getElementById('user-input').addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                const userMessage = this.value;
+                displayMessage(userMessage, true);
+                sendMessageToWit(userMessage);
+                this.value = '';
+            }
+        });
+    </script>
+</body>
+</html>
