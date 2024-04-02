@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #181818;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #chat-container {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        .message {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+
+        .user-message {
+            background-color: #007bff;
+            color: #fff;
+            align-self: flex-end;
+        }
+
+        .chatbot-message {
+            color: #fff;
+            align-self: flex-start;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-top: 1px solid #ccc;
+            font-size: 16px;
+            margin: 0;
+            border-radius: 0;
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        input[type="text"]::placeholder {
+            color: #777;
+        }
+
+        input[type="text"]:focus {
+            border-color: #007bff;
+        }
+
+        #voice-input-button {
+            margin-top: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        #voice-input-button:hover {
+            background-color: #0056b3;
+        }
+
+        #voice-input-button.active {
+            background-color: #ff4500;
+        }
+
+        h1 {
+            color: #007bff;
+            font-size: 28px;
+        }
+
+        #user-input {
+            margin-bottom: 10px;
+        }
+
+        #voice-input-button {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .chatbot-header {
+            background-color: #333;
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        .chatbot-header h2 {
+            color: #fff;
+            font-size: 24px;
+            margin: 0;
+        }
+
+        /* Add styles for the settings icon */
+        #settings-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: #fff;
+            font-size: 24px;
+            z-index: 2;
+        }
+
+        /* Add styles for the settings panel */
+        #settings-panel {
+            position: absolute;
+            top: 40px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            z-index: 1;
+        }
+
+        #settings-panel.show-settings {
+            display: flex;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="chatbot-header">
+        <h2>Welcome to the Chatbot</h2>
+    </div>
+    <!-- Add the settings icon here -->
+    <div id="settings-icon">
+        <i class="fas fa-cog"></i>
+    </div>
+    <!-- Add the settings panel here -->
+    <div id="settings-panel">
+        <h3>Chat Settings</h3>
+        <label for="text-color">Text Color:</label>
+        <input type="color" id="text-color" value="#fff">
+        <label for="bg-color">Background Color:</label>
+        <input type="color" id="bg-color" value="#000">
+        <label for="highlight-color">Text Highlight Color:</label>
+        <input type="color" id="highlight-color" value="#007bff">
+    </div>
+
+    <div id="chat-container">
+        <!-- Chat history will be displayed here -->
+    </div>
+    <input type="text" id="user-input" placeholder="Type a message..." />
+    <button id="voice-input-button">Start Voice Input</button>
+
+    <!-- Video element hidden by default -->
+    <video id="hello-video" controls muted style="display: none; width: 100%; height: auto;">
+        <source src="hello.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <script>
+        const witApiToken = 'BFMZOIXERYR7IERA4OL7POEY6PKBKBAE';
+
+        const responses = {
+            greeting: {
+                text: "I feel great today, thanks for asking!",
+                audio: "greeting.mp3"
+            },
+            happy: {
+                text: "I'm glad to hear that you're happy!",
+                audio: "happy.mp3"
+            },
+            sad: {
+                text: "I'm sorry to hear that you're sad. How can I help?",
+                audio: "sad.mp3"
+            },
+            moan: {
+                text: "..........",
+                audio: "moan.mp3"
+            },
+            angry: {
+                text: "I understand you're angry. Let's talk it out.",
+                audio: "angry.mp3"
+            },
+            insult: {
+                text: "I'm sorry, I didn't want to hurt you.",
+                audio: "insult.mp3"
+            },
+            hello_hi: {
+                text: "Hello, how is your day going?",
+                audio: "hello_hi.mp3"
+            },
+            sfwcompliment: {
+                text: "Wha? *blushes deeply* I- I love you too.",
+                audio: "sfwcompliment.mp3"
+            },
+            nsfw: {
+                text: "What? I'm not ready yet.",
+                audio: "arrestr.mp3"
+            },
+            default: {
+                text: "I'm sorry, I didn't understand. im still in developement",
+                audio: "default.mp3"
+            }
+        };
+
+
+
+
+        let isVoiceInputActive = false;
+        let recognition;
+        let isMicPaused = false;
+
+        // Add event listener for the settings icon
+        const settingsIcon = document.getElementById('settings-icon');
+        settingsIcon.addEventListener('click', toggleSettingsPanel);
+
+        function toggleSettingsPanel() {
+            const settingsPanel = document.getElementById('settings-panel');
+            settingsPanel.classList.toggle('show-settings');
+        }
+
+        // Add event listeners for color input changes
+        const textColorInput = document.getElementById('text-color');
+        const bgColorInput = document.getElementById('bg-color');
+        const highlightColorInput = document.getElementById('highlight-color');
+        const chatContainer = document.getElementById('chat-container');
+
+        textColorInput.addEventListener('input', () => {
+            chatContainer.style.color = textColorInput.value;
+        });
+
+        bgColorInput.addEventListener('input', () => {
+            chatContainer.style.backgroundColor = bgColorInput.value;
+        });
+
+        highlightColorInput.addEventListener('input', () => {
+            chatContainer.style.highlightColor = highlightColorInput.value;
+        });
+
+        // Rest of your existing JavaScript code...
+
+    function sendMessageToWit(message) {
+    fetch(`https://api.wit.ai/message?v=20210914&q=${encodeURIComponent(message)}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${witApiToken}`,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        handleWitResponse(data);
+    })
+    .catch(error => {
+        console.error('Error sending message to Wit.ai:', error);
+    });
+}
+
+function handleWitResponse(response) {
+    if (response && response.intents.length > 0) {
+        const intent = response.intents[0].name;
+        const responseObj = responses[intent] || responses.default;
+
+        // Display text response
+        displayMessage(responseObj.text, false);
+
+        // Play audio response
+        playAudio(responseObj.audio);
+
+        // Pause the microphone input for 0.5 seconds
+        pauseMicrophone(500);
+    } else {
+        const responseObj = responses.default;
+
+        // Display text response
+        displayMessage(responseObj.text, false);
+
+        // Play default audio
+        playAudio(responseObj.audio);
+
+        // Pause the microphone input for 0.5 seconds
+        pauseMicrophone(500);
+    }
+}
+
+function pauseMicrophone(duration) {
+    isMicPaused = true;
+    if (recognition) {
+        recognition.stop();
+    }
+    setTimeout(() => {
+        isMicPaused = false;
+        startVoiceInput();
+    }, duration);
+}
+
+function playAudio(audioFileName) {
+    const audioElement = new Audio(audioFileName);
+    audioElement.play();
+}
+
+function startVoiceInput() {
+    if (recognition && !isMicPaused) {
+        recognition.stop();
+    }
+
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.lang = 'en-US';
+    recognition.onresult = function (event) {
+        const userMessage = event.results[event.results.length - 1][0].transcript;
+        displayMessage(userMessage, true);
+        sendMessageToWit(userMessage);
+    };
+    recognition.onerror = function (event) {
+        console.error('Speech recognition error:', event.error);
+    };
+    recognition.start();
+}
+
+function stopVoiceInput() {
+    if (recognition) {
+        recognition.stop();
+    }
+}
+
+document.getElementById('voice-input-button').addEventListener('click', function () {
+    if (!isVoiceInputActive) {
+        startVoiceInput();
+        isVoiceInputActive = true;
+        this.textContent = 'Stop Voice Input';
+    } else {
+        stopVoiceInput();
+        isVoiceInputActive = false;
+        this.textContent = 'Start Voice Input';
+    }
+});
+
+document.getElementById('user-input').addEventListener('keypress', function (event) {
+    if (event.key === 'Enter') {
+        const userMessage = this.value;
+        displayMessage(userMessage, true);
+        sendMessageToWit(userMessage);
+        this.value = '';
+    }
+});
+
+function displayMessage(text, isUser) {
+    const chatContainer = document.getElementById('chat-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = isUser ? 'user-message' : 'chatbot-message';
+    messageDiv.textContent = text;
+    chatContainer.appendChild(messageDiv);
+}
+</script>
+</body>
+</html>
